@@ -1,0 +1,542 @@
+{
+  "info": {
+    "_postman_id": "40df2f93-328c-4c3b-a1f0-36d57b2be78a",
+    "name": "S.H.I.E.L.D. API",
+    "description": "Postman collection for the Express API. Set baseUrl and run the health check first. For sign-up, configure SMTP, register, check the verification email, then verify. Successful login and verification save the returned JWT as the token collection variable. The authenticated campus assistant uses OpenAI through the Express backend. Admin endpoints require a configured admin account.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "registrationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "listingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "announcementId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "API health",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register (begin OTP signup)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jordan Davis\",\n  \"email\": \"student@example.edu\",\n  \"department\": \"Computer Science\",\n  \"studentId\": \"STUDENT-1001\",\n  \"password\": \"ExamplePass123!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.registrationToken) pm.collectionVariables.set('registrationToken', body.data.registrationToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{otp}}\",\n  \"registrationToken\": \"{{registrationToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/verify-otp"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.token) pm.collectionVariables.set('token', body.data.token);",
+                  "  pm.collectionVariables.unset('registrationToken');",
+                  "  pm.collectionVariables.unset('otp');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationToken\": \"{{registrationToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/resend-otp"
+          }
+        },
+        {
+          "name": "Sign in",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@example.edu\",\n  \"password\": \"ExamplePass123!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.token) pm.collectionVariables.set('token', body.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current authenticated user",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Sign out",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.collectionVariables.unset('token');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard and profile",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dashboard"
+          }
+        },
+        {
+          "name": "Get profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        },
+        {
+          "name": "Update profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jordan Davis\",\n  \"department\": \"Computer Science\",\n  \"bio\": \"Student community member\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "item": [
+        {
+          "name": "List/search posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/community/posts?q=campus&category=All&page=1&limit=20&sort=newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "community", "posts"],
+              "query": [
+                { "key": "q", "value": "campus" },
+                { "key": "category", "value": "All" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort", "value": "newest" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create post",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Study group recommendations\",\n  \"body\": \"Looking for a quiet place to meet near the north quad.\",\n  \"category\": \"Academics\"\n}"
+            },
+            "url": "{{baseUrl}}/api/community/posts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.post && body.data.post.id) pm.collectionVariables.set('postId', body.data.post.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Toggle post like",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/community/posts/{{postId}}/likes"
+          }
+        },
+        {
+          "name": "Report post",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Community guidelines\"\n}"
+            },
+            "url": "{{baseUrl}}/api/community/posts/{{postId}}/reports"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.reportId) pm.collectionVariables.set('reportId', body.data.reportId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lost and found",
+      "item": [
+        {
+          "name": "List/search listings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-found?q=bottle&status=All&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lost-found"],
+              "query": [
+                { "key": "q", "value": "bottle" },
+                { "key": "status", "value": "All" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create listing",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Blue water bottle\",\n  \"category\": \"Accessories\",\n  \"location\": \"Science building\",\n  \"status\": \"Lost\",\n  \"description\": \"Matte blue bottle with a silver cap.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/lost-found"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.item && body.data.item.id) pm.collectionVariables.set('listingId', body.data.item.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Announcements and campus",
+      "item": [
+        {
+          "name": "List/search announcements",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements?q=library&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements"],
+              "query": [
+                { "key": "q", "value": "library" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search campus locations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/campus/locations?q=library&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "campus", "locations"],
+              "query": [
+                { "key": "q", "value": "library" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask campus assistant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Where is the library?\",\n  \"conversationHistory\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/assistant/chat"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Assistant request succeeds', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Assistant response contains a reply', function () {",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.reply).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (body.data && body.data.conversationId) pm.collectionVariables.set('conversationId', body.data.conversationId);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Administration",
+      "item": [
+        {
+          "name": "Admin summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/summary"
+          }
+        },
+        {
+          "name": "List announcements",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/announcements?q=library&status=published&page=1&limit=20"
+          }
+        },
+        {
+          "name": "Create announcement",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Library hours extended during exams\",\n  \"body\": \"The library will remain open later during exam week.\",\n  \"category\": \"Campus\",\n  \"department\": \"University Library\",\n  \"urgent\": false,\n  \"pinned\": false,\n  \"status\": \"published\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/announcements"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.announcement && body.data.announcement.id) pm.collectionVariables.set('announcementId', body.data.announcement.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update announcement",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinned\": true,\n  \"status\": \"published\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "Delete announcement",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "List reports",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/reports?status=pending&page=1&limit=20"
+          }
+        },
+        {
+          "name": "Review report",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"reviewed\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/reports/{{reportId}}"
+          }
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/users?q=jordan&role=student&status=active&page=1&limit=20"
+          }
+        },
+        {
+          "name": "Update user role or status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

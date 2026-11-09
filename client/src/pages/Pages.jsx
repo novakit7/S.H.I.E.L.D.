@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -28,6 +28,7 @@ import Footer from "../components/layout/Footer";
 import useConfirm from "../hooks/useConfirm";
 import useToast from "../hooks/useToast";
 import BrandLogo from "../components/common/BrandLogo";
+import { chatWithAssistant } from "../services/assistantService";
 
 const announcements = [
   {
@@ -264,9 +265,14 @@ function DashboardPageContent() {
         title="Good morning, Jordan."
         description="Here is what is happening around campus today."
         action={
-          <Button variant="outline">
-            <Search size={16} /> Search campus
-          </Button>
+          <div className="search-box">
+            <Search size={16} /> <input
+            className="input"
+            type="text"
+            placeholder="Search campus..."
+            aria-label="Search campus"
+  />
+          </div>
         }
       />
       <div className="grid-4">
@@ -569,36 +575,100 @@ export function CampusMapPage() {
   );
 }
 export function AssistantPage() {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState(() => [
     {
+      id: "welcome",
       role: "assistant",
       text: "Hi! I can help you find approved campus information. What would you like to know?",
+      timestamp: new Date(),
     },
   ]);
   const [text, setText] = useState("");
-  const send = (event) => {
+  const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isSending]);
+
+  const send = async (event, retryText = null) => {
     event.preventDefault();
-    if (!text.trim()) return;
-    setMessages([
-      ...messages,
-      { role: "user", text },
-      {
-        role: "assistant",
-        text: "I am connected to the S.H.I.E.L.D. AIML service in a future integration. I can answer approved campus questions once campus data is configured.",
-      },
-    ]);
+    const messageText = (retryText || text).trim();
+    if (!messageText || isSending) return;
+    const retrying = Boolean(retryText);
+    const visibleMessages = retrying
+      ? messages.filter((message) => !message.error)
+      : messages;
+    const nextMessages = retrying
+      ? visibleMessages
+      : [
+          ...visibleMessages,
+          {
+            id: `user-${Date.now()}`,
+            role: "user",
+            text: messageText,
+            timestamp: new Date(),
+          },
+        ];
+    const conversationHistory = visibleMessages
+      .filter((message) => message.id !== "welcome" && !message.error)
+      .map(({ role, text: content }) => ({ role, content }));
+    setMessages(nextMessages);
     setText("");
+    setIsSending(true);
+    try {
+      const result = await chatWithAssistant({
+        message: messageText,
+        conversationHistory,
+      });
+      setMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          text: result.reply,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        {
+          id: `error-${Date.now()}`,
+          role: "assistant",
+          text: error.message,
+          timestamp: new Date(),
+          error: true,
+          retryText: messageText,
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   };
   return (
     <div className="content">
       <PageHeader
         eyebrow="Campus assistant"
         title="Ask S.H.I.E.L.D.."
-        description="A future Gemini-powered assistant grounded in approved campus information."
+        description="Ask questions grounded in verified campus information."
         action={
-          <Button variant="outline" onClick={() => setMessages([])}>
-            Clear conversation
-          </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            setMessages([
+              {
+                id: "welcome",
+                role: "assistant",
+                text: "Hi! I can help you find approved campus information. What would you like to know?",
+                timestamp: new Date(),
+              },
+            ])
+          }
+          disabled={isSending}
+        >
+          Clear conversation
+        </Button>
         }
       />
       <div className="card chat">
@@ -606,11 +676,33 @@ export function AssistantPage() {
           {messages.map((message, index) => (
             <div
               className={`message ${message.role}`}
-              key={`${message.text}-${index}`}
+              key={message.id || `${message.text}-${index}`}
             >
               {message.text}
+              <span className="message-time">
+                {message.timestamp.toLocaleTimeString([], {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </span>
+              {message.error && (
+                <button
+                  className="retry-button"
+                  type="button"
+                  onClick={(event) => send(event, message.retryText)}
+                  disabled={isSending}
+                >
+                  Retry
+                </button>
+              )}
             </div>
           ))}
+          {isSending && (
+            <div className="message assistant typing-indicator">
+              S.H.I.E.L.D. is thinking...
+            </div>
+          )}
+          <div ref={messagesEndRef} />
           {!messages.length && (
             <EmptyState message="Start a new conversation." />
           )}
@@ -622,6 +714,7 @@ export function AssistantPage() {
             "How do I report a lost item?",
           ].map((suggestion) => (
             <button
+              type="button"
               className="filter"
               key={suggestion}
               onClick={() => setText(suggestion)}
@@ -631,13 +724,22 @@ export function AssistantPage() {
           ))}
         </div>
         <form className="chat-form" onSubmit={send}>
-          <input
-            className="input"
+          <textarea
+            className="input chat-textarea"
             value={text}
             onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                event.currentTarget.form.requestSubmit();
+              }
+            }}
             placeholder="Ask a campus question..."
+            maxLength={2000}
+            rows={2}
+            disabled={isSending}
           />
-          <Button type="submit">
+          <Button type="submit" loading={isSending} loadingText="Sending...">
             Send <ArrowRight size={16} />
           </Button>
         </form>
