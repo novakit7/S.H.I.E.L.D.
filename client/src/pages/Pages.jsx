@@ -265,9 +265,14 @@ function DashboardPageContent() {
         title="Good morning, Jordan."
         description="Here is what is happening around campus today."
         action={
-          <Button variant="outline">
-            <Search size={16} /> Search campus
-          </Button>
+          <div className="search-box">
+            <Search size={16} /> <input
+            className="input"
+            type="text"
+            placeholder="Search campus..."
+            aria-label="Search campus"
+  />
+          </div>
         }
       />
       <div className="grid-4">

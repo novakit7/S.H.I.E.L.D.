@@ -1054,3 +1054,54 @@ td {
     transition-duration: 0.01ms !important;
   }
 }
+/*bug fix in search icon outside the box*/
+.search-inline  {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.search-inline svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.search-inline .input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* search campus bug fix */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 40px;
+  width: 280px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.search-box svg {
+  flex-shrink: 0;
+}
+
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+   background: transparent; 
+  box-shadow: none;
+}
