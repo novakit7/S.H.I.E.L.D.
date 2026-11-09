@@ -1,16 +1,52 @@
-# React + Vite
+# Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The client is a React 19 single-page application built with Vite. It provides public landing and authentication screens, student-facing campus pages, an assistant chat interface, and administrator views.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```powershell
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
 
-## React Compiler
+The default API base URL is `http://localhost:5000/api`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Express API base URL |
+| `VITE_USE_MOCK_API` | When `true`, the assistant service returns a local mock response |
 
-## Expanding the Oxlint configuration
+## Scripts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+`npm run dev`, `npm run build`, `npm run lint`, and `npm run preview` are available.
+
+## Structure
+
+- `src/routes/` — React Router route tree and guards.
+- `src/pages/` — public, authentication, student, assistant, profile, and admin pages.
+- `src/components/` — layouts, cards, common controls, loaders, errors, toasts, and modals.
+- `src/context/` and `src/hooks/` — auth, toast, modal, and convenience hooks.
+- `src/services/` — Axios client, auth service, and assistant service.
+- `src/styles/` — global, component, and variable styles.
+
+## Routes
+
+Public routes are `/`, `/login`, `/register`, and `/verify-otp`. Authenticated routes are `/dashboard`, `/community`, `/lost-found`, `/announcements`, `/campus-map`, `/assistant`, and `/profile`. Administrator routes are `/admin`, `/admin/announcements`, `/admin/reports`, and `/admin/users`. `/access-denied` and `/404` provide fallback screens.
+
+Client guards improve navigation UX but are not a security boundary; the server must enforce authorization.
+
+## Current integration status
+
+`src/services/api.js` and `assistantService.js` can call the Express API. The current `authService.js` uses embedded demo users and `localStorage` rather than server auth endpoints. Most content and admin displays also contain local/demo data in `Pages.jsx`; some controls are presentational.
+
+Demo accounts currently embedded in the client:
+
+- Student: `student@shield.demo` / `S.H.I.E.L.D.123!`
+- Admin: `admin@shield.demo` / `Admin123!`
+
+These credentials and local route-access behavior are for mid-term evaluation only. Remove them before production and connect pages to authenticated API calls.
+
+## UI behavior
+
+Reusable cards and layouts provide consistent presentation. Skeleton loaders and `PageLoader` cover loading states, `ErrorState` and `EmptyState` cover failure/empty states, and the toast/modal providers expose feedback and confirmation flows. The assistant supports suggested prompts, retries, clearing the conversation, and mock mode.
