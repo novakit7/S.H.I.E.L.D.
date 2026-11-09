@@ -18,11 +18,11 @@ import useToast from "../hooks/useToast";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const departments = [
   "Computer Science",
-  "Business",
-  "Design",
-  "Engineering",
-  "Liberal Arts",
-  "Sciences",
+  "Electronics And Communication ",
+  "Electrical",
+  "Electronics And Instrumentation",
+  "Mechanical",
+  "Civil",
 ];
 const features = [
   [Megaphone, "Campus announcements and updates."],

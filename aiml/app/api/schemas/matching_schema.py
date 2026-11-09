@@ -1,7 +1,9 @@
+
 from pydantic import BaseModel, Field
 
 
 class MatchingItem(BaseModel):
+    id: str
     title: str
     description: str = ""
     category: str = ""
@@ -16,8 +18,10 @@ class MatchingRequest(BaseModel):
 
 
 class MatchResult(BaseModel):
-    item: MatchingItem
+    lost_item_id: str
+    found_item_id: str
     similarity_score: float
+    match_status: str = "POSSIBLE_MATCH"
 
 
 class MatchingResponse(BaseModel):
