@@ -1,41 +1,63 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import * as authService from "../services/authService";
 import AuthContext from "./authContext";
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => authService.getStoredUser());
-  const login = useCallback(async (email, password) => {
-    const nextUser = authService.login(email, password);
-    setUser(nextUser);
-    return nextUser;
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    authService
+      .getCurrentUser()
+      .then(({ user: currentUser }) => {
+        if (active) setUser(currentUser);
+      })
+      .catch((error) => {
+        if (active && error.status !== 401) console.error(error);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
-  const signup = useCallback(
-    async (details) => authService.beginSignup(details),
+
+  const login = useCallback(async (email, password) => {
+    const result = await authService.login(email, password);
+    setUser(result.user);
+    return result.user;
+  }, []);
+  const signup = useCallback((details) => authService.register(details), []);
+  const verifyOtp = useCallback(async (code, registrationToken) => {
+    const result = await authService.verifyOtp(code, registrationToken);
+    setUser(result.user);
+    return result.user;
+  }, []);
+  const resendOtp = useCallback(
+    (registrationToken) => authService.resendOtp(registrationToken),
     [],
   );
-  const verifyOtp = useCallback(async (code) => {
-    const nextUser = authService.verifySignup(code);
-    setUser(nextUser);
-    return nextUser;
-  }, []);
-  const resendOtp = useCallback(async () => authService.resendOtp(), []);
-  const logout = useCallback(() => {
-    authService.logout();
+  const logout = useCallback(async () => {
+    await authService.logout();
     setUser(null);
   }, []);
+  const updateUser = useCallback((nextUser) => setUser(nextUser), []);
+
   const value = useMemo(
     () => ({
       user,
       isAuthenticated: Boolean(user),
-      isLoading: false,
+      isLoading,
       signup,
       verifyOtp,
       resendOtp,
       login,
       logout,
-      demoOtp: authService.getPendingOtp,
+      updateUser,
     }),
-    [user, signup, verifyOtp, resendOtp, login, logout],
+    [user, isLoading, signup, verifyOtp, resendOtp, login, logout, updateUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

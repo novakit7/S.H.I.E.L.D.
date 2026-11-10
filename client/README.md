@@ -15,7 +15,6 @@ The default API base URL is `http://localhost:5000/api`.
 | Variable | Purpose |
 |---|---|
 | `VITE_API_URL` | Express API base URL |
-| `VITE_USE_MOCK_API` | When `true`, the assistant service returns a local mock response |
 
 ## Scripts
 
@@ -38,15 +37,10 @@ Client guards improve navigation UX but are not a security boundary; the server 
 
 ## Current integration status
 
-`src/services/api.js` and `assistantService.js` can call the Express API. The current `authService.js` uses embedded demo users and `localStorage` rather than server auth endpoints. Most content and admin displays also contain local/demo data in `Pages.jsx`; some controls are presentational.
+The client uses the Express API for authentication, OTP verification, dashboard, community posts, likes/reports, lost-and-found listings, announcements, campus locations, profiles, administrator operations, and assistant chat. Sessions use the server's HTTP-only cookies; the client does not persist passwords or JWTs in browser storage.
 
-Demo accounts currently embedded in the client:
-
-- Student: `student@shield.demo` / `S.H.I.E.L.D.123!`
-- Admin: `admin@shield.demo` / `Admin123!`
-
-These credentials and local route-access behavior are for mid-term evaluation only. Remove them before production and connect pages to authenticated API calls.
+The backend has no comment, claim, file-upload, password-change, or individual-resource endpoints, so the client does not fabricate those operations. The Python AIML service is intentionally independent and is not called by this application. See [docs/API_INTEGRATION_CONTEXT.md](./docs/API_INTEGRATION_CONTEXT.md) for the complete mapping and remaining limitations.
 
 ## UI behavior
 
-Reusable cards and layouts provide consistent presentation. Skeleton loaders and `PageLoader` cover loading states, `ErrorState` and `EmptyState` cover failure/empty states, and the toast/modal providers expose feedback and confirmation flows. The assistant supports suggested prompts, retries, clearing the conversation, and mock mode.
+Reusable cards and layouts provide consistent presentation. Skeleton loaders and `PageLoader` cover loading states, `ErrorState` and `EmptyState` cover failure/empty states, and the toast/modal providers expose feedback and confirmation flows. The assistant supports retries and clearing the conversation.

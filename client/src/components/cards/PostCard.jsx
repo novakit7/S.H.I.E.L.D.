@@ -1,13 +1,17 @@
 import { Flag, Heart, MessageCircle } from "lucide-react";
 import useConfirm from "../../hooks/useConfirm";
 import useToast from "../../hooks/useToast";
-export default function PostCard({ post }) {
+export default function PostCard({ post, onLike, onReport, liking = false }) {
   const { confirm } = useConfirm();
   const toast = useToast();
   const report = async () => {
+    if (onReport) {
+      await onReport();
+      return;
+    }
     const accepted = await confirm({
       title: "Report this post?",
-      description: "Our demo moderation team will review this report.",
+      description:       "The moderation team will review this report.",
       confirmText: "Report post",
       variant: "warning",
       onConfirm: async () => {},
@@ -32,8 +36,8 @@ export default function PostCard({ post }) {
         <p className="muted">{post.body}</p>
       </div>
       <div className="post-actions">
-        <button>
-          <Heart size={16} /> {post.likes}
+        <button onClick={onLike} disabled={liking}>
+          <Heart size={16} fill={post.liked ? "currentColor" : "none"} /> {post.likes}
         </button>
         <button>
           <MessageCircle size={16} /> Comment

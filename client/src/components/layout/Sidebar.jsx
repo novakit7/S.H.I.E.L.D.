@@ -34,11 +34,11 @@ export default function Sidebar({ open, onClose }) {
     const accepted = await confirm({
       title: "Log out of S.H.I.E.L.D.?",
       description:
-        "Your current demo session will be cleared from this browser.",
+        "Your current session will be signed out.",
       confirmText: "Log out",
       variant: "warning",
       onConfirm: async () => {
-        logout();
+        await logout();
       },
     });
     if (accepted) {
