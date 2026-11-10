@@ -7,6 +7,14 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="dashboard-layout">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {sidebarOpen && (
+        <button
+          className="sidebar-backdrop"
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className="main-area">
         <Navbar onMenu={() => setSidebarOpen(true)} />
         {children}
